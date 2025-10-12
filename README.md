@@ -1,120 +1,111 @@
-# Webapp de Coleta de Dados - Equipe de Rua
+# DadosRua - Webapp de Coleta de Dados
 
-Sistema de coleta de dados para a equipe de rua do vereador Fernando Armelau, desenvolvido com Next.js 14, Supabase e TailwindCSS.
+Webapp para coleta de dados de rua desenvolvido para equipes de campanha política.
 
 ## 🚀 Tecnologias
 
-- **Frontend**: Next.js 14 (App Router) + TypeScript + TailwindCSS + shadcn/ui
-- **Backend**: Supabase (Auth + Database + Storage)
+- **Frontend**: Next.js 14, TypeScript, TailwindCSS, shadcn/ui
+- **Backend**: Supabase (Auth + Database)
 - **Deploy**: Vercel
-- **Mobile-first**: Design responsivo otimizado para dispositivos móveis
+- **Mobile-first**: Design otimizado para dispositivos móveis
 
 ## 📋 Funcionalidades
 
-### Para Coletores
+### Para Coletadores
 - ✅ Login/Registro de usuários
 - ✅ Visualizar campanhas ativas
 - ✅ Entrar em campanhas
-- ✅ Coletar dados de contatos (bairro, nome, telefone, demanda)
-- ✅ Editar contatos durante campanha ativa
-- ✅ Autocomplete de bairros do Rio de Janeiro
-- ✅ Interface mobile-first
+- ✅ Coletar contatos (bairro, nome, telefone, demanda)
+- ✅ Editar contatos até o fim da campanha
+- ✅ Interface mobile otimizada
 
 ### Para Administradores
 - ✅ Dashboard com estatísticas
-- ✅ Gerenciar campanhas (criar, editar, finalizar)
+- ✅ Gerenciar campanhas
 - ✅ Gerenciar usuários
-- ✅ Visualizar todos os dados coletados
 - ✅ Exportar dados para Excel
-- ✅ Configurar registro de usuários
-- ✅ Definir horários de campanha
+- ✅ Configurações do sistema
 
 ## 🛠️ Configuração
 
-### 1. Clone o repositório
-```bash
-git clone <repository-url>
-cd dadosrua
-```
-
-### 2. Instale as dependências
-```bash
-npm install
-```
-
-### 3. Configure o Supabase
+### 1. Configurar Supabase
 
 1. Crie um projeto no [Supabase](https://supabase.com)
-2. Execute o arquivo `supabase-schema.sql` no SQL Editor do Supabase
+2. Execute o SQL do arquivo `supabase-schema.sql` no SQL Editor
 3. Copie as credenciais do projeto
 
-### 4. Configure as variáveis de ambiente
+### 2. Configurar Variáveis de Ambiente
 
 Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_de_servico_do_supabase
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role
 ```
 
-### 5. Execute o projeto
+### 3. Instalar Dependências
+
+```bash
+npm install
+```
+
+### 4. Executar em Desenvolvimento
+
 ```bash
 npm run dev
 ```
 
-O projeto estará disponível em `http://localhost:3000`
+### 5. Deploy na Vercel
 
-## 📱 Como Usar
+1. Conecte o repositório na Vercel
+2. Configure as variáveis de ambiente
+3. Faça o deploy
 
-### Primeiro Acesso (Admin)
-1. Acesse `/register` para criar a primeira conta
-2. No banco de dados, altere o role do usuário para 'admin':
-   ```sql
-   UPDATE users SET role = 'admin' WHERE email = 'seu@email.com';
-   ```
+## 📱 Uso
 
-### Criando Campanhas
-1. Faça login como admin
-2. Acesse o dashboard
-3. Clique em "Nova Campanha"
-4. Preencha os dados (nome, local, data/hora início e fim)
-5. A campanha ficará disponível para os coletores
+### Primeiro Acesso
+1. Acesse a aplicação
+2. Clique em "Criar Conta" (se registro estiver aberto)
+3. Faça login com suas credenciais
 
-### Coletando Dados
-1. Faça login como coletador
-2. Veja as campanhas ativas
-3. Clique em "Entrar em Campanha"
-4. Use o formulário para coletar dados
-5. Os dados ficam salvos automaticamente
+### Para Coletadores
+1. Visualize campanhas ativas
+2. Entre em uma campanha
+3. Colete contatos usando o formulário
+4. Edite contatos se necessário
+
+### Para Administradores
+1. Acesse o dashboard admin
+2. Crie campanhas
+3. Monitore estatísticas
+4. Exporte dados
 
 ## 🗂️ Estrutura do Projeto
 
 ```
 src/
-├── app/                    # Páginas do Next.js (App Router)
-│   ├── admin/             # Páginas do admin
-│   ├── collector/         # Páginas do coletador
-│   ├── login/             # Página de login
-│   └── register/          # Página de registro
-├── components/            # Componentes React
-│   ├── ui/               # Componentes de UI (shadcn/ui)
-│   └── ...               # Outros componentes
-├── lib/                  # Utilitários e configurações
-│   ├── supabase.ts       # Cliente Supabase
-│   ├── validations.ts    # Schemas de validação (Zod)
-│   └── utils.ts          # Funções utilitárias
-└── data/                 # Dados estáticos
-    └── neighborhoods.json # Lista de bairros do RJ
+├── app/                 # Páginas Next.js
+│   ├── admin/          # Páginas administrativas
+│   ├── collector/      # Páginas do coletador
+│   ├── login/          # Página de login
+│   └── register/       # Página de registro
+├── components/         # Componentes React
+│   ├── admin/         # Componentes administrativos
+│   ├── collector/     # Componentes do coletador
+│   ├── auth/          # Componentes de autenticação
+│   └── ui/            # Componentes de UI
+├── hooks/             # Hooks customizados
+├── lib/               # Utilitários e configurações
+└── data/              # Dados estáticos
 ```
 
 ## 🔒 Segurança
 
-- **Row Level Security (RLS)** habilitado no Supabase
-- Coletores só veem seus próprios dados
-- Admins têm acesso total
+- Autenticação via Supabase Auth
+- Row Level Security (RLS) no banco
 - Validação de formulários com Zod
-- Sanitização de inputs
+- Proteção de rotas por role
 
 ## 📊 Banco de Dados
 
@@ -123,31 +114,19 @@ src/
 - `campaigns` - Campanhas de coleta
 - `campaign_participants` - Participantes das campanhas
 - `contacts` - Contatos coletados
-- `app_settings` - Configurações do app
+- `app_settings` - Configurações do sistema
 
-### Relacionamentos
-- Um usuário pode participar de várias campanhas
-- Uma campanha pode ter vários participantes
-- Um contato pertence a uma campanha e um coletador
+## 🎯 Próximos Passos
 
-## 🚀 Deploy
+- [ ] Notificações push
+- [ ] Relatórios avançados
+- [ ] Integração com WhatsApp
+- [ ] Backup automático
 
-### Vercel
-1. Conecte o repositório à Vercel
-2. Configure as variáveis de ambiente
-3. Deploy automático
+## 📞 Suporte
 
-### Variáveis de Ambiente (Produção)
-```env
-NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_de_servico_do_supabase
-```
+Para dúvidas ou suporte, entre em contato com a equipe de desenvolvimento.
 
-## 📝 Licença
+---
 
-Este projeto é privado e destinado ao uso da equipe de rua do vereador Fernando Armelau.
-
-## 🤝 Suporte
-
-Para dúvidas ou problemas, entre em contato com a equipe de desenvolvimento.
+Desenvolvido com ❤️ para campanhas políticas eficientes.
