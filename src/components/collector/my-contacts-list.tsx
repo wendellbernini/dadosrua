@@ -92,7 +92,7 @@ export function MyContactsList() {
   }
 
   const myContacts = contacts.filter(contact => 
-    contact.collector_id === activeCampaign.participants.find(p => p.user_id === contact.collector_id)?.user_id
+    contact.campaign_id === activeCampaign.id
   )
 
   return (

@@ -34,6 +34,12 @@ export function AddContactForm() {
     formState: { errors },
   } = useForm<CreateContactInput>({
     resolver: zodResolver(createContactSchema),
+    defaultValues: {
+      neighborhood: '',
+      first_name: '',
+      phone: '',
+      demand: '',
+    },
   })
 
   const watchedNeighborhood = watch('neighborhood')

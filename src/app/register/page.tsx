@@ -68,12 +68,31 @@ export default function RegisterPage() {
 
       if (authError) {
         console.error('Erro no signUp:', authError)
-        setError(`Erro na autenticação: ${authError.message}`)
+        if (authError.message.includes('already registered')) {
+          setError('Este nome de usuário já está em uso. Tente outro.')
+        } else if (authError.message.includes('password')) {
+          setError('A senha deve ter pelo menos 6 caracteres.')
+        } else {
+          setError(`Erro na criação da conta: ${authError.message}`)
+        }
         return
       }
 
       if (authData.user) {
-        console.log('Usuário criado no auth, criando perfil...')
+        console.log('Usuário criado no auth, confirmando email automaticamente...')
+        
+        // Confirm email automatically since we're using fake emails
+        const { error: confirmError } = await supabase.auth.admin.updateUserById(
+          authData.user.id,
+          { email_confirm: true }
+        )
+
+        if (confirmError) {
+          console.error('Erro ao confirmar email:', confirmError)
+          // Continue anyway, user can still be created
+        }
+
+        console.log('Email confirmado, criando perfil...')
         
         // Create user profile
         const { data: profileData, error: profileError } = await supabase
@@ -89,7 +108,11 @@ export default function RegisterPage() {
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError)
-          setError(`Erro ao criar perfil: ${profileError.message}`)
+          if (profileError.message.includes('duplicate key')) {
+            setError('Este nome de usuário já está em uso. Tente outro.')
+          } else {
+            setError(`Erro ao criar perfil: ${profileError.message}`)
+          }
           return
         }
 

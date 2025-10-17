@@ -35,18 +35,25 @@ export default function LoginPage() {
       // Generate the same fake email used during registration
       const fakeEmail = `${data.username}@supabase.co`
       
+      console.log('Tentando fazer login com:', { username: data.username, fakeEmail })
+      
       // Sign in with the fake email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: fakeEmail,
         password: data.password,
       })
 
+      console.log('Resultado do login:', { authData, authError })
+
       if (authError) {
-        setError('Nome de usuário ou senha incorretos')
+        console.error('Erro no login:', authError)
+        setError(`Erro: ${authError.message}`)
         return
       }
 
       if (authData.user) {
+        console.log('Usuário autenticado, buscando dados do perfil...')
+        
         // Get user role from our users table
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -54,11 +61,16 @@ export default function LoginPage() {
           .eq('id', authData.user.id)
           .single()
 
+        console.log('Dados do perfil:', { userData, userError })
+
         if (userError || !userData) {
+          console.error('Erro ao buscar perfil:', userError)
           setError('Erro ao carregar dados do usuário')
           return
         }
 
+        console.log('Login bem-sucedido, redirecionando...')
+        
         // Redirect based on role
         if (userData.role === 'admin') {
           router.push('/admin')
@@ -66,7 +78,8 @@ export default function LoginPage() {
           router.push('/collector')
         }
       }
-    } catch {
+    } catch (err) {
+      console.error('Erro geral no login:', err)
       setError('Erro interno. Tente novamente.')
     } finally {
       setIsLoading(false)

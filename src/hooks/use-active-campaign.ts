@@ -35,7 +35,18 @@ export function useActiveCampaign() {
         .single()
 
       if (participation?.campaigns) {
-        setActiveCampaign(participation.campaigns as unknown as ActiveCampaign)
+        // Get campaign participants
+        const { data: participants } = await supabase
+          .from('campaign_participants')
+          .select('*')
+          .eq('campaign_id', participation.campaign_id)
+
+        const campaignWithParticipants = {
+          ...participation.campaigns,
+          participants: participants || []
+        } as ActiveCampaign
+
+        setActiveCampaign(campaignWithParticipants)
       } else {
         setActiveCampaign(null)
       }
