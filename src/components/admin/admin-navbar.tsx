@@ -35,7 +35,7 @@ export function AdminNavbar() {
   }
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: BarChart3 },
+    { href: '/admin', label: 'Visão Geral', icon: BarChart3 },
     { href: '/admin/campaigns', label: 'Campanhas', icon: Megaphone },
     { href: '/admin/users', label: 'Usuários', icon: Users },
     { href: '/admin/export', label: 'Exportar', icon: Download },
@@ -47,22 +47,25 @@ export function AdminNavbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/admin" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
+          <Link href="/admin" className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+              <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-xl text-gray-900">
-              Admin - Equipe de Rua
-            </span>
+            <div>
+              <span className="font-bold text-xl text-gray-900">
+                Equipe de Rua
+              </span>
+              <p className="text-xs text-gray-500 -mt-1">Sistema de Coleta</p>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
               >
                 <item.icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -74,15 +77,17 @@ export function AdminNavbar() {
           <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{profile?.username}</span>
+                <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="hidden sm:inline font-medium text-gray-700">{profile?.username}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-semibold">Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair
                 </DropdownMenuItem>

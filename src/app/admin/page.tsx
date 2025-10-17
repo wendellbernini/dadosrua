@@ -29,9 +29,9 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Visão Geral</h1>
         <p className="text-gray-600 mt-2">
-          Visão geral das campanhas e dados coletados
+          Acompanhe o desempenho das campanhas e dados coletados
         </p>
       </div>
 

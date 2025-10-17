@@ -55,18 +55,29 @@ export function useCampaigns() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
+      // Converter as datas para o formato correto do PostgreSQL
+      const startDate = new Date(campaignData.start_date).toISOString()
+      const endDate = new Date(campaignData.end_date).toISOString()
+      
+      const campaignToInsert = {
+        name: campaignData.name,
+        location: campaignData.location,
+        start_date: startDate,
+        end_date: endDate,
+        created_by: user.id,
+      }
+
       const { data, error } = await supabase
         .from('campaigns')
-        .insert({
-          ...campaignData,
-          created_by: user.id,
-        })
+        .insert(campaignToInsert)
         .select()
         .single()
 
       if (error) throw error
 
-      await fetchCampaigns()
+      // Atualizar lista localmente em vez de refetch completo
+      setCampaigns(prev => [data, ...prev])
+      
       return data
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Erro ao criar campanha')
@@ -84,7 +95,11 @@ export function useCampaigns() {
 
       if (error) throw error
 
-      await fetchCampaigns()
+      // Atualizar lista localmente
+      setCampaigns(prev => prev.map(campaign => 
+        campaign.id === id ? { ...campaign, ...data } : campaign
+      ))
+      
       return data
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Erro ao atualizar campanha')
@@ -93,6 +108,28 @@ export function useCampaigns() {
 
   const finishCampaign = async (id: string) => {
     return updateCampaign(id, { status: 'finished' })
+  }
+
+  const reopenCampaign = async (id: string) => {
+    return updateCampaign(id, { status: 'active' })
+  }
+
+  const deleteCampaign = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      // Remover da lista localmente
+      setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
+      
+      return true
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erro ao excluir campanha')
+    }
   }
 
   const joinCampaign = async (campaignId: string) => {
@@ -145,6 +182,8 @@ export function useCampaigns() {
     createCampaign,
     updateCampaign,
     finishCampaign,
+    reopenCampaign,
+    deleteCampaign,
     joinCampaign,
     leaveCampaign,
     refetch: fetchCampaigns,

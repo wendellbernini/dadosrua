@@ -2,14 +2,13 @@ import { z } from 'zod'
 
 // User schemas
 export const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
+  username: z.string().min(2, 'Nome de usuário é obrigatório'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
 export const registerSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   username: z.string().min(2, 'Nome de usuário deve ter pelo menos 2 caracteres'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
 // Campaign schemas

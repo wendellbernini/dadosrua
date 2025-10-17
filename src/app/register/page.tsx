@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [registrationOpen, setRegistrationOpen] = useState(false)
+  const [registrationOpen, setRegistrationOpen] = useState(true) // Temporarily force open
   const router = useRouter()
   const supabase = createClient()
 
@@ -31,12 +31,18 @@ export default function RegisterPage() {
   // Check if registration is open
   useEffect(() => {
     const checkRegistrationStatus = async () => {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('registration_open')
-        .single()
-      
-      setRegistrationOpen(data?.registration_open ?? false)
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('registration_open')
+          .single()
+        
+        console.log('Registration status:', data, error)
+        setRegistrationOpen(data?.registration_open ?? true) // Default to true if error
+      } catch (err) {
+        console.error('Error checking registration status:', err)
+        setRegistrationOpen(true) // Default to true if error
+      }
     }
 
     checkRegistrationStatus()
@@ -47,37 +53,55 @@ export default function RegisterPage() {
     setError(null)
 
     try {
+      // Generate a unique email for Supabase Auth (they require email)
+      const fakeEmail = `${data.username}@supabase.co`
+      
+      console.log('Tentando criar usuário com:', { username: data.username, fakeEmail })
+      
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
+        email: fakeEmail,
         password: data.password,
       })
 
+      console.log('Resultado do signUp:', { authData, authError })
+
       if (authError) {
-        setError(authError.message)
+        console.error('Erro no signUp:', authError)
+        setError(`Erro na autenticação: ${authError.message}`)
         return
       }
 
       if (authData.user) {
+        console.log('Usuário criado no auth, criando perfil...')
+        
         // Create user profile
-        const { error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('users')
           .insert({
             id: authData.user.id,
-            email: data.email,
             username: data.username,
             role: 'collector',
           })
+          .select()
+
+        console.log('Resultado da criação do perfil:', { profileData, profileError })
 
         if (profileError) {
-          setError('Erro ao criar perfil. Tente novamente.')
+          console.error('Erro ao criar perfil:', profileError)
+          setError(`Erro ao criar perfil: ${profileError.message}`)
           return
         }
 
+        console.log('Conta criada com sucesso!')
         router.push('/collector')
+      } else {
+        console.error('authData.user é null')
+        setError('Erro: usuário não foi criado')
       }
-    } catch {
-      setError('Erro interno. Tente novamente.')
+    } catch (err) {
+      console.error('Erro geral:', err)
+      setError(`Erro interno: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)
     } finally {
       setIsLoading(false)
     }
@@ -139,19 +163,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register('email')}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>

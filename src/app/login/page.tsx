@@ -32,27 +32,39 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
+      // Generate the same fake email used during registration
+      const fakeEmail = `${data.username}@supabase.co`
+      
+      // Sign in with the fake email
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: fakeEmail,
         password: data.password,
       })
 
-      if (error) {
-        setError('Email ou senha incorretos')
+      if (authError) {
+        setError('Nome de usuário ou senha incorretos')
         return
       }
 
-      // Get user role and redirect accordingly
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('email', data.email)
-        .single()
+      if (authData.user) {
+        // Get user role from our users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', authData.user.id)
+          .single()
 
-      if (userData?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/collector')
+        if (userError || !userData) {
+          setError('Erro ao carregar dados do usuário')
+          return
+        }
+
+        // Redirect based on role
+        if (userData.role === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/collector')
+        }
       }
     } catch {
       setError('Erro interno. Tente novamente.')
@@ -81,16 +93,16 @@ export default function LoginPage() {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Nome de Usuário</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register('email')}
+                id="username"
+                type="text"
+                placeholder="Seu nome de usuário"
+                {...register('username')}
                 disabled={isLoading}
               />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+              {errors.username && (
+                <p className="text-sm text-red-500">{errors.username.message}</p>
               )}
             </div>
 

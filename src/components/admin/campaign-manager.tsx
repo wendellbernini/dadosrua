@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useCampaigns } from '@/hooks/use-campaigns'
 import { useExport } from '@/hooks/use-export'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,17 +10,20 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { CreateCampaignForm } from './create-campaign-form'
 import { EditCampaignForm } from './edit-campaign-form'
-import { Calendar, MapPin, Users, Clock, Plus, Edit, Eye, Download } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, Plus, Edit, Eye, Download, Trash2, RotateCcw } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function CampaignManager() {
-  const { campaigns, loading, finishCampaign } = useCampaigns()
+  const router = useRouter()
+  const { campaigns, loading, finishCampaign, reopenCampaign, deleteCampaign, refetch } = useCampaigns()
   const { exportCampaignContacts, exporting } = useExport()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedCampaign, setSelectedCampaign] = useState<{ id: string; name: string; location: string; start_date: string; end_date: string } | null>(null)
   const [finishing, setFinishing] = useState<string | null>(null)
+  const [reopening, setReopening] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const handleFinishCampaign = async (campaignId: string) => {
     setFinishing(campaignId)
@@ -32,9 +36,39 @@ export function CampaignManager() {
     }
   }
 
+  const handleReopenCampaign = async (campaignId: string) => {
+    setReopening(campaignId)
+    try {
+      await reopenCampaign(campaignId)
+    } catch (error) {
+      console.error('Error reopening campaign:', error)
+    } finally {
+      setReopening(null)
+    }
+  }
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.')) {
+      return
+    }
+    
+    setDeleting(campaignId)
+    try {
+      await deleteCampaign(campaignId)
+    } catch (error) {
+      console.error('Error deleting campaign:', error)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
   const handleEditCampaign = (campaign: { id: string; name: string; location: string; start_date: string; end_date: string }) => {
     setSelectedCampaign(campaign)
     setEditDialogOpen(true)
+  }
+
+  const handleViewCampaignDetails = (campaignId: string) => {
+    router.push(`/admin/campaigns/${campaignId}`)
   }
 
   const handleExportCampaign = async (campaign: { id: string; name: string }) => {
@@ -91,7 +125,9 @@ export function CampaignManager() {
                 Preencha os dados da nova campanha de coleta
               </DialogDescription>
             </DialogHeader>
-            <CreateCampaignForm onSuccess={() => setCreateDialogOpen(false)} />
+            <CreateCampaignForm onSuccess={() => {
+              setCreateDialogOpen(false)
+            }} />
           </DialogContent>
         </Dialog>
       </div>
@@ -152,6 +188,7 @@ export function CampaignManager() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => handleViewCampaignDetails(campaign.id)}
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     Ver Detalhes
@@ -167,7 +204,7 @@ export function CampaignManager() {
                     {exporting ? 'Exportando...' : 'Exportar'}
                   </Button>
 
-                  {campaign.status === 'active' && (
+                  {campaign.status === 'active' ? (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -176,7 +213,29 @@ export function CampaignManager() {
                     >
                       {finishing === campaign.id ? 'Finalizando...' : 'Finalizar'}
                     </Button>
+                  ) : (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handleReopenCampaign(campaign.id)}
+                      disabled={reopening === campaign.id}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      {reopening === campaign.id ? 'Reabrindo...' : 'Reabrir'}
+                    </Button>
                   )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteCampaign(campaign.id)}
+                    disabled={deleting === campaign.id}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {deleting === campaign.id ? 'Excluindo...' : 'Excluir'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
