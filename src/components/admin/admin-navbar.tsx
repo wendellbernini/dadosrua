@@ -65,7 +65,7 @@ export function AdminNavbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+                className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium text-sm"
               >
                 <item.icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -74,20 +74,20 @@ export function AdminNavbar() {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-2 py-2">
+                  <div className="w-7 h-7 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                    <User className="w-3 h-3 text-white" />
                   </div>
-                  <span className="hidden sm:inline font-medium text-gray-700">{profile?.username}</span>
+                  <span className="hidden lg:inline font-medium text-gray-700 text-sm">{profile?.username}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-semibold">Minha Conta</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="font-semibold text-sm">Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600 text-sm">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair
                 </DropdownMenuItem>
@@ -98,23 +98,23 @@ export function AdminNavbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
+              className="md:hidden p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-2">
+          <div className="md:hidden py-3 border-t bg-gray-50">
+            <div className="grid grid-cols-2 gap-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-white rounded-md transition-colors text-sm"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <item.icon className="w-4 h-4" />

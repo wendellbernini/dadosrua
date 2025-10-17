@@ -92,40 +92,46 @@ export function RecentCampaigns() {
             Nenhuma campanha criada ainda
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {campaigns.map((campaign) => (
-              <div key={campaign.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">{campaign.name}</h4>
-                    <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                      {campaign.status === 'active' ? 'Ativa' : 'Finalizada'}
-                    </Badge>
+              <Link 
+                key={campaign.id} 
+                href={`/admin/campaigns/${campaign.id}`}
+                className="block p-4 border rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 cursor-pointer"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-medium text-gray-900 truncate">{campaign.name}</h4>
+                      <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'} className="shrink-0">
+                        {campaign.status === 'active' ? 'Ativa' : 'Finalizada'}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-2">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{campaign.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 shrink-0" />
+                        <span>{format(new Date(campaign.start_date), 'dd/MM', { locale: ptBR })}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3 h-3 shrink-0" />
+                        <span>{campaign.participant_count} participantes</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {campaign.contact_count} contatos coletados
+                    </p>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {campaign.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {format(new Date(campaign.start_date), 'dd/MM', { locale: ptBR })}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {campaign.participant_count} participantes
+                  <div className="ml-3 shrink-0">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-blue-600" />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {campaign.contact_count} contatos coletados
-                  </p>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/admin/campaigns/${campaign.id}`}>
-                    <Eye className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
+              </Link>
             ))}
           </div>
         )}
