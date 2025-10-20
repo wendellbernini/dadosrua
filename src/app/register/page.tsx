@@ -100,6 +100,7 @@ export default function RegisterPage() {
           .insert({
             id: authData.user.id,
             username: data.username,
+            full_name: data.full_name,
             role: 'collector',
           })
           .select()
@@ -167,6 +168,19 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nome Pessoal</Label>
+              <Input
+                id="full_name"
+                placeholder="Seu nome completo"
+                {...register('full_name')}
+                disabled={isLoading}
+              />
+              {errors.full_name && (
+                <p className="text-sm text-red-500">{errors.full_name.message}</p>
+              )}
+            </div>
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>

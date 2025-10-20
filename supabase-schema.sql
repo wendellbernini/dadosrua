@@ -10,6 +10,7 @@ CREATE TABLE public.users (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     username TEXT UNIQUE NOT NULL,
+    full_name TEXT,
     role user_role DEFAULT 'collector' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
@@ -104,11 +105,12 @@ $$ language 'plpgsql';
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.users (id, email, username, role)
+    INSERT INTO public.users (id, email, username, full_name, role)
     VALUES (
         NEW.id,
         NEW.email,
         COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+        NEW.raw_user_meta_data->>'full_name',
         'collector'
     );
     RETURN NEW;

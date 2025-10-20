@@ -18,9 +18,13 @@ export function useCampaigns() {
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (retryCount = 0) => {
     try {
       setLoading(true)
+      setError(null)
+      
+      console.log(`Tentativa ${retryCount + 1} de carregar campanhas...`)
+      
       const { data, error } = await supabase
         .from('campaigns')
         .select(`
@@ -30,7 +34,12 @@ export function useCampaigns() {
         `)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao buscar campanhas:', error)
+        throw error
+      }
+
+      console.log('Campanhas carregadas:', data?.length || 0)
 
       const campaignsWithCounts = data?.map(campaign => ({
         ...campaign,
@@ -39,7 +48,18 @@ export function useCampaigns() {
 
       setCampaigns(campaignsWithCounts)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas')
+      console.error('Erro ao carregar campanhas:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar campanhas'
+      setError(errorMessage)
+      
+      // Retry automático até 3 vezes
+      if (retryCount < 2) {
+        console.log(`Tentando novamente em 2 segundos... (tentativa ${retryCount + 2}/3)`)
+        setTimeout(() => {
+          fetchCampaigns(retryCount + 1)
+        }, 2000)
+        return
+      }
     } finally {
       setLoading(false)
     }

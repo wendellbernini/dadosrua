@@ -8,6 +8,7 @@ export interface UserProfile {
   id: string
   email: string
   username: string
+  full_name: string | null
   role: 'admin' | 'collector'
 }
 
@@ -64,11 +65,26 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
+  const refreshProfile = async () => {
+    if (user) {
+      console.log('Atualizando perfil no hook...')
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      console.log('Perfil atualizado:', { profile, error })
+      setProfile(profile)
+    }
+  }
+
   return {
     user,
     profile,
     loading,
     signOut,
+    refreshProfile,
     isAdmin: profile?.role === 'admin',
     isCollector: profile?.role === 'collector',
   }

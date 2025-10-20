@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
@@ -18,14 +17,12 @@ import {
   Plus, 
   Users, 
   User, 
-  LogOut,
-  Menu
+  LogOut
 } from 'lucide-react'
 
 export function CollectorNavbar() {
   const { profile, signOut } = useAuth()
   const router = useRouter()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -40,13 +37,10 @@ export function CollectorNavbar() {
 
   return (
     <nav className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/collector" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Home className="w-5 h-5 text-white" />
-            </div>
+          {/* Marca simples sem ícone para visual mais limpo */}
+          <Link href="/collector" className="flex items-center">
             <span className="font-bold text-xl text-gray-900">
               Equipe de Rua
             </span>
@@ -66,55 +60,36 @@ export function CollectorNavbar() {
             ))}
           </div>
 
-          {/* User Menu */}
+          {/* Menu do Usuário */}
           <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{profile?.username}</span>
+                  <span className="hidden sm:inline">
+                    {profile?.full_name || profile?.username}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/collector/profile" className="flex items-center">
+                    <User className="w-4 h-4 mr-2" />
+                    Configurações
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Sem menu hambúrguer no mobile; navegação inferior já existe */}
       </div>
     </nav>
   )

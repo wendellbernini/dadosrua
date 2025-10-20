@@ -6,12 +6,12 @@ import { useActiveCampaign } from '@/hooks/use-active-campaign'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Users, Clock } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, RefreshCw, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function CampaignList() {
-  const { campaigns, loading } = useCampaigns()
+  const { campaigns, loading, error, refetch } = useCampaigns()
   const { activeCampaign, setActiveCampaignId } = useActiveCampaign()
   const [joining, setJoining] = useState<string | null>(null)
 
@@ -27,6 +27,32 @@ export function CampaignList() {
   }
 
   const activeCampaigns = campaigns.filter(campaign => campaign.status === 'active')
+
+  // Mostrar erro se houver
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Campanhas Disponíveis</h2>
+        <Card>
+          <CardContent className="text-center py-8">
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Erro ao carregar campanhas</h3>
+                <p className="text-gray-500 mt-1">{error}</p>
+              </div>
+              <Button onClick={() => refetch()} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Tentar Novamente
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

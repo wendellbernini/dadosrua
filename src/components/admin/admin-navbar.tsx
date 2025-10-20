@@ -44,7 +44,7 @@ export function AdminNavbar() {
 
   return (
     <nav className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/admin" className="flex items-center space-x-3">
@@ -81,7 +81,9 @@ export function AdminNavbar() {
                   <div className="w-7 h-7 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
                     <User className="w-3 h-3 text-white" />
                   </div>
-                  <span className="hidden lg:inline font-medium text-gray-700 text-sm">{profile?.username}</span>
+                  <span className="hidden lg:inline font-medium text-gray-700 text-sm">
+                    {profile?.full_name || profile?.username}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">

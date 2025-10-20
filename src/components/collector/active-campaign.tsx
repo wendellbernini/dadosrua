@@ -25,6 +25,7 @@ export function ActiveCampaign() {
     }
   }
 
+
   if (loading) {
     return (
       <Card className="animate-pulse">
@@ -97,14 +98,14 @@ export function ActiveCampaign() {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Link href="/collector/add-contact" className="flex-1">
-            <Button className="w-full" size="lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Link href="/collector/add-contact" className="min-w-0">
+            <Button className="w-full truncate" size="lg">
               Adicionar Contato
             </Button>
           </Link>
-          <Link href="/collector/my-contacts" className="flex-1">
-            <Button variant="outline" className="w-full" size="lg">
+          <Link href="/collector/my-contacts" className="min-w-0">
+            <Button variant="outline" className="w-full truncate" size="lg">
               Ver Meus Contatos
             </Button>
           </Link>

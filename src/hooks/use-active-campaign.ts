@@ -16,13 +16,21 @@ export function useActiveCampaign() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  const fetchActiveCampaign = async () => {
+  const fetchActiveCampaign = async (retryCount = 0) => {
     try {
+      setLoading(true)
+      
+      console.log(`Tentativa ${retryCount + 1} de carregar campanha ativa...`)
+      
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        console.log('Usuário não autenticado')
+        setActiveCampaign(null)
+        return
+      }
 
       // Get user's current campaign participation
-      const { data: participation } = await supabase
+      const { data: participation, error: participationError } = await supabase
         .from('campaign_participants')
         .select(`
           campaign_id,
@@ -34,24 +42,46 @@ export function useActiveCampaign() {
         .limit(1)
         .single()
 
+      if (participationError) {
+        console.log('Nenhuma campanha ativa encontrada:', participationError.message)
+        setActiveCampaign(null)
+        return
+      }
+
       if (participation?.campaigns) {
+        console.log('Campanha ativa encontrada:', (participation.campaigns as unknown as Campaign).name)
+        
         // Get campaign participants
-        const { data: participants } = await supabase
+        const { data: participants, error: participantsError } = await supabase
           .from('campaign_participants')
           .select('*')
           .eq('campaign_id', participation.campaign_id)
 
+        if (participantsError) {
+          console.error('Erro ao buscar participantes:', participantsError)
+        }
+
         const campaignWithParticipants = {
           ...participation.campaigns,
           participants: participants || []
-        } as ActiveCampaign
+        } as unknown as ActiveCampaign
 
         setActiveCampaign(campaignWithParticipants)
       } else {
         setActiveCampaign(null)
       }
     } catch (error) {
-      console.error('Error fetching active campaign:', error)
+      console.error('Erro ao buscar campanha ativa:', error)
+      
+      // Retry automático até 3 vezes
+      if (retryCount < 2) {
+        console.log(`Tentando novamente em 2 segundos... (tentativa ${retryCount + 2}/3)`)
+        setTimeout(() => {
+          fetchActiveCampaign(retryCount + 1)
+        }, 2000)
+        return
+      }
+      
       setActiveCampaign(null)
     } finally {
       setLoading(false)

@@ -1,13 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
-import { CollectorNavbar } from '@/components/collector/collector-navbar'
-import { MobileNavigation } from '@/components/collector/mobile-navigation'
+import { ProfileSettings } from '@/components/collector/profile-settings'
 
-export default async function CollectorLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function ProfilePage() {
   const supabase = await createClient()
   
   const {
@@ -30,14 +25,15 @@ export default async function CollectorLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CollectorNavbar />
-      <main className="pb-20">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
-      </main>
-      <MobileNavigation />
+    <div className="space-y-6 p-4">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Minha Conta</h1>
+        <p className="text-gray-600 mt-2">
+          Gerencie suas informações pessoais e configurações
+        </p>
+      </div>
+
+      <ProfileSettings />
     </div>
   )
 }

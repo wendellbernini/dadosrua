@@ -14,6 +14,7 @@ export type Database = {
           id: string
           email: string
           username: string
+          full_name: string | null
           role: 'admin' | 'collector'
           created_at: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           id: string
           email: string
           username: string
+          full_name?: string | null
           role?: 'admin' | 'collector'
           created_at?: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           id?: string
           email?: string
           username?: string
+          full_name?: string | null
           role?: 'admin' | 'collector'
           created_at?: string
         }
