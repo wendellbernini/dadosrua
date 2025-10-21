@@ -96,7 +96,16 @@ export function ProfileSettings() {
       }
 
       setSuccess('Perfil atualizado com sucesso!')
-      await refreshProfile()
+      
+      // Aguardar um pouco antes de atualizar o perfil para evitar problemas de estado
+      setTimeout(async () => {
+        try {
+          await refreshProfile()
+        } catch (err) {
+          console.error('Erro ao atualizar perfil após salvamento:', err)
+        }
+      }, 500)
+      
     } catch (err) {
       console.error('Erro geral:', err)
       setError(`Erro interno: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)

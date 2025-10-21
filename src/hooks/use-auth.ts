@@ -68,14 +68,24 @@ export function useAuth() {
   const refreshProfile = async () => {
     if (user) {
       console.log('Atualizando perfil no hook...')
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      
-      console.log('Perfil atualizado:', { profile, error })
-      setProfile(profile)
+      try {
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        console.log('Perfil atualizado:', { profile, error })
+        
+        if (error) {
+          console.error('Erro ao atualizar perfil:', error)
+          return
+        }
+        
+        setProfile(profile)
+      } catch (err) {
+        console.error('Erro geral ao atualizar perfil:', err)
+      }
     }
   }
 
