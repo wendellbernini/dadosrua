@@ -48,8 +48,9 @@ export function useActiveCampaign() {
         return
       }
 
-      if (participation?.campaigns) {
-        console.log('Campanha ativa encontrada:', (participation.campaigns as unknown as Campaign).name)
+      if (participation && participation.campaigns) {
+        const campaign = participation.campaigns as unknown as Campaign
+        console.log('Campanha ativa encontrada:', campaign.name)
         
         // Get campaign participants
         const { data: participants, error: participantsError } = await supabase
@@ -62,9 +63,9 @@ export function useActiveCampaign() {
         }
 
         const campaignWithParticipants = {
-          ...participation.campaigns,
+          ...campaign,
           participants: participants || []
-        } as unknown as ActiveCampaign
+        } as ActiveCampaign
 
         setActiveCampaign(campaignWithParticipants)
       } else {
