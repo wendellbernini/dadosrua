@@ -24,19 +24,18 @@ export function useActiveCampaign() {
       
       console.log(`Tentativa ${retryCount + 1} de carregar campanha ativa...`)
       
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         console.log('Usuário não autenticado')
         setActiveCampaign(null)
         return
       }
 
-      // Get user's current campaign participation
+      // Get user's current campaign participation using a simpler query
       const { data: participation, error: participationError } = await supabase
         .from('campaign_participants')
         .select(`
           campaign_id,
-          campaigns!inner(*)
+          campaigns(*)
         `)
         .eq('user_id', user.id)
         .eq('campaigns.status', 'active')
@@ -151,7 +150,19 @@ export function useActiveCampaign() {
       setActiveCampaign(null)
       setLoading(false)
     }
-  }, [user])
+  }, [user, fetchActiveCampaign])
+
+  // Fallback: tentar carregar campanha ativa novamente após um delay se não houver dados
+  useEffect(() => {
+    if (user && !activeCampaign && !loading) {
+      console.log('Fallback: tentando carregar campanha ativa novamente...')
+      const timeoutId = setTimeout(() => {
+        fetchActiveCampaign()
+      }, 1000)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [user, activeCampaign, loading, fetchActiveCampaign])
 
   return {
     activeCampaign,

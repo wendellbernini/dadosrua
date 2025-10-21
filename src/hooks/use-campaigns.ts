@@ -27,6 +27,12 @@ export function useCampaigns() {
       
       console.log(`Tentativa ${retryCount + 1} de carregar campanhas...`)
       
+      if (!user) {
+        console.log('Usuário não autenticado, limpando campanhas')
+        setCampaigns([])
+        return
+      }
+      
       const { data, error } = await supabase
         .from('campaigns')
         .select(`
@@ -201,7 +207,19 @@ export function useCampaigns() {
       setCampaigns([])
       setLoading(false)
     }
-  }, [user])
+  }, [user, fetchCampaigns])
+
+  // Fallback: tentar carregar campanhas novamente após um delay se não houver dados
+  useEffect(() => {
+    if (user && campaigns.length === 0 && !loading && !error) {
+      console.log('Fallback: tentando carregar campanhas novamente...')
+      const timeoutId = setTimeout(() => {
+        fetchCampaigns()
+      }, 1000)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [user, campaigns.length, loading, error, fetchCampaigns])
 
   return {
     campaigns,
