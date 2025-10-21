@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { Database } from '@/lib/supabase'
 import { useAuth } from './use-auth'
@@ -18,7 +18,7 @@ export function useActiveCampaign() {
   const { user } = useAuth()
   const supabase = createClient()
 
-  const fetchActiveCampaign = async (retryCount = 0) => {
+  const fetchActiveCampaign = useCallback(async (retryCount = 0) => {
     try {
       setLoading(true)
       
@@ -88,7 +88,7 @@ export function useActiveCampaign() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, supabase])
 
   const setActiveCampaignId = async (campaignId: string) => {
     try {
@@ -151,18 +151,6 @@ export function useActiveCampaign() {
       setLoading(false)
     }
   }, [user, fetchActiveCampaign])
-
-  // Fallback: tentar carregar campanha ativa novamente após um delay se não houver dados
-  useEffect(() => {
-    if (user && !activeCampaign && !loading) {
-      console.log('Fallback: tentando carregar campanha ativa novamente...')
-      const timeoutId = setTimeout(() => {
-        fetchActiveCampaign()
-      }, 1000)
-      
-      return () => clearTimeout(timeoutId)
-    }
-  }, [user, activeCampaign, loading, fetchActiveCampaign])
 
   return {
     activeCampaign,
