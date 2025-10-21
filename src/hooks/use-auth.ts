@@ -40,16 +40,28 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id)
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          
-          setProfile(profile)
+          try {
+            const { data: profile, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            
+            if (error) {
+              console.error('Erro ao buscar perfil:', error)
+              setProfile(null)
+            } else {
+              console.log('Perfil carregado:', profile)
+              setProfile(profile)
+            }
+          } catch (err) {
+            console.error('Erro geral ao buscar perfil:', err)
+            setProfile(null)
+          }
         } else {
           setProfile(null)
         }
@@ -83,6 +95,12 @@ export function useAuth() {
         }
         
         setProfile(profile)
+        
+        // Forçar uma verificação de autenticação para garantir que o estado está consistente
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        if (currentUser) {
+          setUser(currentUser)
+        }
       } catch (err) {
         console.error('Erro geral ao atualizar perfil:', err)
       }

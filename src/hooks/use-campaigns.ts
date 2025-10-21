@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { Database } from '@/lib/supabase'
+import { useAuth } from './use-auth'
 
 type Campaign = Database['public']['Tables']['campaigns']['Row']
 type CampaignParticipant = Database['public']['Tables']['campaign_participants']['Row']
@@ -16,6 +17,7 @@ export function useCampaigns() {
   const [campaigns, setCampaigns] = useState<CampaignWithParticipants[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
   const supabase = createClient()
 
   const fetchCampaigns = async (retryCount = 0) => {
@@ -191,8 +193,15 @@ export function useCampaigns() {
   }
 
   useEffect(() => {
-    fetchCampaigns()
-  }, [])
+    if (user) {
+      console.log('Usuário mudou, buscando campanhas...', user.id)
+      fetchCampaigns()
+    } else {
+      console.log('Usuário não autenticado, limpando campanhas')
+      setCampaigns([])
+      setLoading(false)
+    }
+  }, [user])
 
   return {
     campaigns,
