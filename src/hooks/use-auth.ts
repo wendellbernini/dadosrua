@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-client'
 
@@ -17,74 +17,97 @@ export function useAuth() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+  const isInitialized = useRef(false)
+  const lastUserId = useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
 
-    const getUser = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user }, error } = await supabase.auth.getUser()
         
         if (!mounted) return
         
-        setUser(user)
+        if (error) {
+          console.error('Erro ao obter usuário:', error)
+          setUser(null)
+          setProfile(null)
+        } else {
+          setUser(user)
+          lastUserId.current = user?.id || null
 
-        if (user) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single()
-          
-          if (mounted) {
-            setProfile(profile)
+          if (user) {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', user.id)
+              .single()
+            
+            if (mounted) {
+              setProfile(profile)
+            }
           }
         }
 
         if (mounted) {
           setLoading(false)
+          isInitialized.current = true
         }
       } catch (error) {
-        console.error('Erro ao obter usuário:', error)
+        console.error('Erro ao inicializar auth:', error)
         if (mounted) {
+          setUser(null)
+          setProfile(null)
           setLoading(false)
+          isInitialized.current = true
         }
       }
     }
 
-    getUser()
+    initializeAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return
         
-        console.log('Auth state changed:', event, session?.user?.id)
-        setUser(session?.user ?? null)
+        const currentUserId = session?.user?.id || null
         
-        if (session?.user) {
-          try {
-            const { data: profile, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
-            
-            if (error) {
-              console.error('Erro ao buscar perfil:', error)
+        // Só processar se o usuário realmente mudou ou se é um evento significativo
+        if (currentUserId !== lastUserId.current || 
+            event === 'SIGNED_IN' || 
+            event === 'SIGNED_OUT' || 
+            event === 'TOKEN_REFRESHED') {
+          
+          console.log('Auth state changed:', event, currentUserId)
+          lastUserId.current = currentUserId
+          
+          setUser(session?.user ?? null)
+          
+          if (session?.user) {
+            try {
+              const { data: profile, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single()
+              
+              if (error) {
+                console.error('Erro ao buscar perfil:', error)
+                if (mounted) setProfile(null)
+              } else {
+                if (mounted) setProfile(profile)
+              }
+            } catch (err) {
+              console.error('Erro geral ao buscar perfil:', err)
               if (mounted) setProfile(null)
-            } else {
-              console.log('Perfil carregado:', profile)
-              if (mounted) setProfile(profile)
             }
-          } catch (err) {
-            console.error('Erro geral ao buscar perfil:', err)
+          } else {
             if (mounted) setProfile(null)
           }
-        } else {
-          if (mounted) setProfile(null)
         }
         
-        if (mounted) {
+        if (mounted && isInitialized.current) {
           setLoading(false)
         }
       }

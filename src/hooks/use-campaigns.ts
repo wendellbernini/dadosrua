@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { Database } from '@/lib/supabase'
 import { useAuth } from './use-auth'
@@ -19,19 +19,22 @@ export function useCampaigns() {
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
   const supabase = createClient()
+  const lastUserId = useRef<string | null>(null)
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchCampaigns = useCallback(async (retryCount = 0) => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      console.log(`Tentativa ${retryCount + 1} de carregar campanhas...`)
-      
-      if (!user) {
-        console.log('Usuário não autenticado, limpando campanhas')
-        setCampaigns([])
-        return
-      }
+      const fetchCampaigns = useCallback(async (retryCount = 0) => {
+        try {
+          setLoading(true)
+          setError(null)
+          
+          if (retryCount === 0) {
+            console.log('Carregando campanhas...')
+          }
+          
+          if (!user) {
+            setCampaigns([])
+            return
+          }
       
       const { data, error } = await supabase
         .from('campaigns')
@@ -48,10 +51,19 @@ export function useCampaigns() {
 
       console.log('Campanhas carregadas:', data?.length || 0)
 
-      const campaignsWithCounts = data?.map(campaign => ({
-        ...campaign,
-        contact_count: 0 // Simplified for now
-      })) || []
+      // Fetch contact count for each campaign
+      const campaignsWithCounts = await Promise.all(data.map(async (campaign) => {
+        const { count, error: countError } = await supabase
+          .from('contacts')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', campaign.id)
+
+        if (countError) {
+          console.error(`Erro ao buscar contagem de contatos para a campanha ${campaign.id}:`, countError)
+          return { ...campaign, participants: campaign.participants || [], contact_count: 0 }
+        }
+        return { ...campaign, participants: campaign.participants || [], contact_count: count || 0 }
+      }))
 
       setCampaigns(campaignsWithCounts)
     } catch (err) {
@@ -59,14 +71,13 @@ export function useCampaigns() {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar campanhas'
       setError(errorMessage)
       
-      // Retry automático até 3 vezes
-      if (retryCount < 2) {
-        console.log(`Tentando novamente em 2 segundos... (tentativa ${retryCount + 2}/3)`)
-        setTimeout(() => {
-          fetchCampaigns(retryCount + 1)
-        }, 2000)
-        return
-      }
+          // Retry automático até 3 vezes
+          if (retryCount < 2) {
+            setTimeout(() => {
+              fetchCampaigns(retryCount + 1)
+            }, 2000)
+            return
+          }
     } finally {
       setLoading(false)
     }
@@ -198,16 +209,35 @@ export function useCampaigns() {
     }
   }
 
-  useEffect(() => {
-    if (user) {
-      console.log('Usuário mudou, buscando campanhas...', user.id)
-      fetchCampaigns()
-    } else {
-      console.log('Usuário não autenticado, limpando campanhas')
-      setCampaigns([])
-      setLoading(false)
-    }
-  }, [user, fetchCampaigns])
+      useEffect(() => {
+        const currentUserId = user?.id || null
+        
+        // Só buscar se o usuário realmente mudou
+        if (currentUserId !== lastUserId.current) {
+          lastUserId.current = currentUserId
+          
+          // Limpar timeout anterior se existir
+          if (fetchTimeoutRef.current) {
+            clearTimeout(fetchTimeoutRef.current)
+          }
+          
+          if (user) {
+            // Debounce para evitar múltiplas chamadas
+            fetchTimeoutRef.current = setTimeout(() => {
+              fetchCampaigns()
+            }, 100)
+          } else {
+            setCampaigns([])
+            setLoading(false)
+          }
+        }
+        
+        return () => {
+          if (fetchTimeoutRef.current) {
+            clearTimeout(fetchTimeoutRef.current)
+          }
+        }
+      }, [user, fetchCampaigns])
 
   return {
     campaigns,

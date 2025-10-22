@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { Database } from '@/lib/supabase'
 import { useAuth } from './use-auth'
@@ -17,18 +17,21 @@ export function useActiveCampaign() {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const supabase = createClient()
+  const lastUserId = useRef<string | null>(null)
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchActiveCampaign = useCallback(async (retryCount = 0) => {
-    try {
-      setLoading(true)
-      
-      console.log(`Tentativa ${retryCount + 1} de carregar campanha ativa...`)
-      
-      if (!user) {
-        console.log('Usuário não autenticado')
-        setActiveCampaign(null)
-        return
-      }
+      const fetchActiveCampaign = useCallback(async (retryCount = 0) => {
+        try {
+          setLoading(true)
+          
+          if (retryCount === 0) {
+            console.log('Carregando campanha ativa...')
+          }
+          
+          if (!user) {
+            setActiveCampaign(null)
+            return
+          }
 
       // Get user's current campaign participation using a simpler query
       const { data: participation, error: participationError } = await supabase
@@ -43,15 +46,13 @@ export function useActiveCampaign() {
         .limit(1)
         .single()
 
-      if (participationError) {
-        console.log('Nenhuma campanha ativa encontrada:', participationError.message)
-        setActiveCampaign(null)
-        return
-      }
+          if (participationError) {
+            setActiveCampaign(null)
+            return
+          }
 
-      if (participation && participation.campaigns) {
-        const campaign = participation.campaigns as unknown as Campaign
-        console.log('Campanha ativa encontrada:', campaign.name)
+          if (participation && participation.campaigns) {
+            const campaign = participation.campaigns as unknown as Campaign
         
         // Get campaign participants
         const { data: participants, error: participantsError } = await supabase
@@ -75,14 +76,13 @@ export function useActiveCampaign() {
     } catch (error) {
       console.error('Erro ao buscar campanha ativa:', error)
       
-      // Retry automático até 3 vezes
-      if (retryCount < 2) {
-        console.log(`Tentando novamente em 2 segundos... (tentativa ${retryCount + 2}/3)`)
-        setTimeout(() => {
-          fetchActiveCampaign(retryCount + 1)
-        }, 2000)
-        return
-      }
+          // Retry automático até 3 vezes
+          if (retryCount < 2) {
+            setTimeout(() => {
+              fetchActiveCampaign(retryCount + 1)
+            }, 2000)
+            return
+          }
       
       setActiveCampaign(null)
     } finally {
@@ -141,16 +141,35 @@ export function useActiveCampaign() {
     }
   }
 
-  useEffect(() => {
-    if (user) {
-      console.log('Usuário mudou, buscando campanha ativa...', user.id)
-      fetchActiveCampaign()
-    } else {
-      console.log('Usuário não autenticado, limpando campanha ativa')
-      setActiveCampaign(null)
-      setLoading(false)
-    }
-  }, [user, fetchActiveCampaign])
+      useEffect(() => {
+        const currentUserId = user?.id || null
+        
+        // Só buscar se o usuário realmente mudou
+        if (currentUserId !== lastUserId.current) {
+          lastUserId.current = currentUserId
+          
+          // Limpar timeout anterior se existir
+          if (fetchTimeoutRef.current) {
+            clearTimeout(fetchTimeoutRef.current)
+          }
+          
+          if (user) {
+            // Debounce para evitar múltiplas chamadas
+            fetchTimeoutRef.current = setTimeout(() => {
+              fetchActiveCampaign()
+            }, 100)
+          } else {
+            setActiveCampaign(null)
+            setLoading(false)
+          }
+        }
+        
+        return () => {
+          if (fetchTimeoutRef.current) {
+            clearTimeout(fetchTimeoutRef.current)
+          }
+        }
+      }, [user, fetchActiveCampaign])
 
   return {
     activeCampaign,
