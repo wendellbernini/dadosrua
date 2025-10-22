@@ -25,27 +25,50 @@ export function useAuth() {
 
     const initializeAuth = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser()
+        // Primeiro, tentar obter a sessão atual
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (!mounted) return
         
-        if (error) {
-          console.error('Erro ao obter usuário:', error)
-          setUser(null)
-          setProfile(null)
-        } else {
-          setUser(user)
-          lastUserId.current = user?.id || null
+        if (sessionError) {
+          console.error('Erro ao obter sessão:', sessionError)
+        }
+        
+        if (session?.user) {
+          setUser(session.user)
+          lastUserId.current = session.user.id
 
-          if (user) {
-            const { data: profile } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', user.id)
-              .single()
-            
-            if (mounted) {
-              setProfile(profile)
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (mounted) {
+            setProfile(profile)
+          }
+        } else {
+          // Se não há sessão, tentar obter usuário diretamente
+          const { data: { user }, error } = await supabase.auth.getUser()
+          
+          if (error) {
+            console.error('Erro ao obter usuário:', error)
+            setUser(null)
+            setProfile(null)
+          } else {
+            setUser(user)
+            lastUserId.current = user?.id || null
+
+            if (user) {
+              const { data: profile } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', user.id)
+                .single()
+              
+              if (mounted) {
+                setProfile(profile)
+              }
             }
           }
         }
@@ -66,6 +89,22 @@ export function useAuth() {
     }
 
     initializeAuth()
+
+    // Listener para quando a página volta do background (importante no mobile)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isInitialized.current) {
+        // Página voltou do background, verificar se a sessão ainda é válida
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user && session.user.id !== lastUserId.current) {
+            console.log('Sessão restaurada após voltar do background')
+            lastUserId.current = session.user.id
+            setUser(session.user)
+          }
+        })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -115,6 +154,7 @@ export function useAuth() {
 
     return () => {
       mounted = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       subscription.unsubscribe()
     }
   }, [supabase])

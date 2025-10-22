@@ -9,6 +9,7 @@ import { Users, Trophy, Medal, Award } from 'lucide-react'
 interface TopCollector {
   id: string
   username: string
+  full_name: string | null
   contact_count: number
   campaign_count: number
 }
@@ -21,28 +22,62 @@ export function TopCollectors() {
   useEffect(() => {
     const fetchTopCollectors = async () => {
       try {
+        // Verificar se é admin primeiro
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Usuário não autenticado')
+        
+        const { data: currentUser } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        
+        if (currentUser?.role !== 'admin') {
+          throw new Error('Acesso negado - apenas administradores')
+        }
+        
+        // Buscar coletores diretamente
         const { data, error } = await supabase
           .from('users')
           .select(`
             id,
             username,
-            contacts(count),
-            campaign_participants(count)
+            full_name
           `)
           .eq('role', 'collector')
+          .order('created_at', { ascending: false })
 
         if (error) throw error
 
-        const collectorsWithCounts = data?.map(collector => ({
-          id: collector.id,
-          username: collector.username,
-          contact_count: collector.contacts?.[0]?.count || 0,
-          campaign_count: collector.campaign_participants?.[0]?.count || 0,
-        }))
-          .sort((a, b) => b.contact_count - a.contact_count)
-          .slice(0, 5) || []
 
-        setCollectors(collectorsWithCounts)
+        // Buscar contagem de contatos para cada coletor
+        const collectorsWithCounts = await Promise.all(
+          data?.map(async (collector) => {
+            const { count: contactCount } = await supabase
+              .from('contacts')
+              .select('*', { count: 'exact', head: true })
+              .eq('collector_id', collector.id)
+
+            const { count: campaignCount } = await supabase
+              .from('campaign_participants')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', collector.id)
+
+            return {
+              id: collector.id,
+              username: collector.username,
+              full_name: collector.full_name,
+              contact_count: contactCount || 0,
+              campaign_count: campaignCount || 0,
+            }
+          }) || []
+        )
+
+        const sortedCollectors = collectorsWithCounts
+          .sort((a, b) => b.contact_count - a.contact_count)
+          .slice(0, 5)
+
+        setCollectors(sortedCollectors)
       } catch (error) {
         console.error('Error fetching top collectors:', error)
       } finally {
@@ -124,7 +159,7 @@ export function TopCollectors() {
                     <span className="font-medium text-lg">#{index + 1}</span>
                   </div>
                   <div>
-                    <h4 className="font-medium">{collector.username}</h4>
+                    <h4 className="font-medium">{collector.full_name || collector.username}</h4>
                     <p className="text-sm text-gray-600">
                       {collector.campaign_count} campanha{collector.campaign_count !== 1 ? 's' : ''}
                     </p>

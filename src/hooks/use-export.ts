@@ -16,7 +16,7 @@ export function useExport() {
         .select(`
           *,
           campaign:campaigns(name, location),
-          collector:users!contacts_collector_id_fkey(username)
+          collector:users!contacts_collector_id_fkey(username, full_name)
         `)
         .order('created_at', { ascending: false })
 
@@ -26,7 +26,7 @@ export function useExport() {
         id: contact.id,
         campaign_name: contact.campaign?.name || 'N/A',
         campaign_location: contact.campaign?.location || 'N/A',
-        collector_name: contact.collector?.username || 'N/A',
+        collector_name: contact.collector?.full_name || contact.collector?.username || 'N/A',
         neighborhood: contact.neighborhood,
         first_name: contact.first_name,
         phone: contact.phone,
@@ -51,7 +51,7 @@ export function useExport() {
         .select(`
           *,
           campaign:campaigns(name, location),
-          collector:users!contacts_collector_id_fkey(username)
+          collector:users!contacts_collector_id_fkey(username, full_name)
         `)
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
@@ -62,7 +62,7 @@ export function useExport() {
         id: contact.id,
         campaign_name: contact.campaign?.name || 'N/A',
         campaign_location: contact.campaign?.location || 'N/A',
-        collector_name: contact.collector?.username || 'N/A',
+        collector_name: contact.collector?.full_name || contact.collector?.username || 'N/A',
         neighborhood: contact.neighborhood,
         first_name: contact.first_name,
         phone: contact.phone,
@@ -100,7 +100,7 @@ export function useExport() {
         .select(`
           *,
           campaign:campaigns(name, location),
-          collector:users!contacts_collector_id_fkey(username)
+          collector:users!contacts_collector_id_fkey(username, full_name)
         `)
         .order('created_at', { ascending: false })
 
@@ -110,7 +110,7 @@ export function useExport() {
         id: contact.id,
         campaign_name: contact.campaign?.name || 'N/A',
         campaign_location: contact.campaign?.location || 'N/A',
-        collector_name: contact.collector?.username || 'N/A',
+        collector_name: contact.collector?.full_name || contact.collector?.username || 'N/A',
         neighborhood: contact.neighborhood,
         first_name: contact.first_name,
         phone: contact.phone,

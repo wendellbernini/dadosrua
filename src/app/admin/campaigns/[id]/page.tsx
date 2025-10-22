@@ -24,9 +24,8 @@ interface Campaign {
     id: string
     user_id: string
     joined_at: string
-    users: {
-      username: string
-    }
+    username: string
+    full_name: string | null
   }>
   contacts: Array<{
     id: string
@@ -35,9 +34,8 @@ interface Campaign {
     phone: string
     demand?: string
     created_at: string
-    users: {
-      username: string
-    }
+    collector_username: string
+    collector_full_name: string | null
   }>
 }
 
@@ -63,30 +61,34 @@ export default function CampaignDetailsPage() {
   const fetchCampaignDetails = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      // Buscar dados da campanha primeiro
+      const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
-        .select(`
-          *,
-          participants:campaign_participants(
-            id,
-            user_id,
-            joined_at,
-            users:user_id(username)
-          ),
-          contacts(
-            id,
-            neighborhood,
-            first_name,
-            phone,
-            demand,
-            created_at,
-            users:collector_id(username)
-          )
-        `)
+        .select('*')
         .eq('id', campaignId)
         .single()
 
-      if (error) throw error
+      if (campaignError) throw campaignError
+
+      // Buscar participantes separadamente usando RPC
+      const { data: participants, error: participantsError } = await supabase
+        .rpc('get_campaign_participants', { campaign_id: campaignId })
+
+      if (participantsError) throw participantsError
+
+      // Buscar contatos separadamente usando RPC
+      const { data: contacts, error: contactsError } = await supabase
+        .rpc('get_campaign_contacts', { campaign_id: campaignId })
+
+      if (contactsError) throw contactsError
+
+      // Combinar os dados
+      const data = {
+        ...campaignData,
+        participants: participants || [],
+        contacts: contacts || []
+      }
+
       setCampaign(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar campanha')
@@ -290,7 +292,7 @@ export default function CampaignDetailsPage() {
               {campaign.participants.map((participant) => (
                 <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium">{participant.users.username}</p>
+                    <p className="font-medium">{participant.full_name || participant.username || 'Usuário não encontrado'}</p>
                     <p className="text-sm text-gray-600">
                       Entrou em {format(new Date(participant.joined_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                     </p>
@@ -331,7 +333,7 @@ export default function CampaignDetailsPage() {
                         </p>
                       )}
                       <p className="text-xs text-gray-500">
-                        Coletado por {contact.users.username} em {' '}
+                        Coletado por {contact.collector_full_name || contact.collector_username || 'Coletor não encontrado'} em {' '}
                         {format(new Date(contact.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                       </p>
                     </div>

@@ -17,7 +17,8 @@ import {
   Plus, 
   Users, 
   User, 
-  LogOut
+  LogOut,
+  MapPin
 } from 'lucide-react'
 
 export function CollectorNavbar() {
@@ -39,11 +40,19 @@ export function CollectorNavbar() {
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Marca simples sem ícone para visual mais limpo */}
-          <Link href="/collector" className="flex items-center">
-            <span className="font-bold text-xl text-gray-900">
-              Equipe de Rua
-            </span>
+          {/* Marca com ícone */}
+          <Link href="/collector" className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-xl text-gray-900">
+                  Equipe de Rua
+                </span>
+                <p className="text-xs text-gray-500 -mt-1">Sistema de Coleta</p>
+              </div>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
