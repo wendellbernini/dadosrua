@@ -25,6 +25,14 @@ export function useContacts(campaignId?: string) {
   const fetchContacts = async () => {
     try {
       setLoading(true)
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setContacts([])
+        return
+      }
+
       let query = supabase
         .from('contacts')
         .select(`
@@ -32,6 +40,7 @@ export function useContacts(campaignId?: string) {
           campaign:campaigns(name, location),
           collector:users!contacts_collector_id_fkey(username)
         `)
+        .eq('collector_id', user.id) // Only get contacts from current user
         .order('created_at', { ascending: false })
 
       if (campaignId) {

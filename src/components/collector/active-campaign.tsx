@@ -1,18 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useActiveCampaign } from '@/hooks/use-active-campaign'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Users, LogOut } from 'lucide-react'
+import { Calendar, MapPin, Users, LogOut, Phone } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase-client'
 
 export function ActiveCampaign() {
   const { activeCampaign, loading, leaveActiveCampaign } = useActiveCampaign()
   const [leaving, setLeaving] = useState(false)
+  const [totalContacts, setTotalContacts] = useState<number>(0)
+  const supabase = createClient()
+
+  // Buscar total de contatos da campanha
+  useEffect(() => {
+    const fetchTotalContacts = async () => {
+      if (!activeCampaign) {
+        setTotalContacts(0)
+        return
+      }
+
+      try {
+        const { count, error } = await supabase
+          .from('contacts')
+          .select('*', { count: 'exact', head: true })
+          .eq('campaign_id', activeCampaign.id)
+
+        if (error) {
+          console.error('Erro ao buscar total de contatos:', error)
+        } else {
+          setTotalContacts(count || 0)
+        }
+      } catch (err) {
+        console.error('Erro ao buscar total de contatos:', err)
+      }
+    }
+
+    fetchTotalContacts()
+  }, [activeCampaign, supabase])
 
   const handleLeaveCampaign = async () => {
     setLeaving(true)
@@ -95,6 +125,10 @@ export function ActiveCampaign() {
           <div className="flex items-center gap-2 text-sm text-blue-800">
             <Users className="w-4 h-4" />
             <span>{activeCampaign.participants.length} participantes</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-blue-800">
+            <Phone className="w-4 h-4" />
+            <span>{totalContacts} contatos coletados</span>
           </div>
         </div>
 

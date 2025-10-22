@@ -58,10 +58,16 @@ export default function RegisterPage() {
       
       console.log('Tentando criar usuário com:', { username: data.username, fakeEmail })
       
-      // Create auth user
+      // Create auth user with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: fakeEmail,
         password: data.password,
+        options: {
+          data: {
+            username: data.username,
+            full_name: data.full_name,
+          }
+        }
       })
 
       console.log('Resultado do signUp:', { authData, authError })
@@ -79,45 +85,7 @@ export default function RegisterPage() {
       }
 
       if (authData.user) {
-        console.log('Usuário criado no auth, confirmando email automaticamente...')
-        
-        // Confirm email automatically since we're using fake emails
-        const { error: confirmError } = await supabase.auth.admin.updateUserById(
-          authData.user.id,
-          { email_confirm: true }
-        )
-
-        if (confirmError) {
-          console.error('Erro ao confirmar email:', confirmError)
-          // Continue anyway, user can still be created
-        }
-
-        console.log('Email confirmado, criando perfil...')
-        
-        // Create user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            username: data.username,
-            full_name: data.full_name,
-            role: 'collector',
-          })
-          .select()
-
-        console.log('Resultado da criação do perfil:', { profileData, profileError })
-
-        if (profileError) {
-          console.error('Erro ao criar perfil:', profileError)
-          if (profileError.message.includes('duplicate key')) {
-            setError('Este nome de usuário já está em uso. Tente outro.')
-          } else {
-            setError(`Erro ao criar perfil: ${profileError.message}`)
-          }
-          return
-        }
-
-        console.log('Conta criada com sucesso!')
+        console.log('Usuário criado com sucesso!')
         router.push('/collector')
       } else {
         console.error('authData.user é null')

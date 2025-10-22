@@ -33,6 +33,19 @@ export function NeighborhoodAutocomplete({
   className,
 }: NeighborhoodAutocompleteProps) {
   const [open, setOpen] = React.useState(false)
+  const [searchValue, setSearchValue] = React.useState('')
+
+  // Função para filtrar bairros com busca mais precisa
+  const filteredNeighborhoods = React.useMemo(() => {
+    if (!searchValue.trim()) {
+      return neighborhoods
+    }
+
+    const searchTerm = searchValue.toLowerCase().trim()
+    return neighborhoods.filter(neighborhood => 
+      neighborhood.toLowerCase().includes(searchTerm)
+    )
+  }, [searchValue])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,18 +61,23 @@ export function NeighborhoodAutocomplete({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Buscar bairro..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Buscar bairro..." 
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
             <CommandEmpty>Nenhum bairro encontrado.</CommandEmpty>
             <CommandGroup>
-              {neighborhoods.map((neighborhood) => (
+              {filteredNeighborhoods.map((neighborhood) => (
                 <CommandItem
                   key={neighborhood}
                   value={neighborhood}
                   onSelect={(currentValue) => {
                     onValueChange?.(currentValue === value ? '' : currentValue)
                     setOpen(false)
+                    setSearchValue('')
                   }}
                 >
                   <Check

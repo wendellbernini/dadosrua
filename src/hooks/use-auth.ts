@@ -19,27 +19,45 @@ export function useAuth() {
   const supabase = createClient()
 
   useEffect(() => {
+    let mounted = true
+
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single()
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
         
-        setProfile(profile)
-      }
+        if (!mounted) return
+        
+        setUser(user)
 
-      setLoading(false)
+        if (user) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          
+          if (mounted) {
+            setProfile(profile)
+          }
+        }
+
+        if (mounted) {
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Erro ao obter usuário:', error)
+        if (mounted) {
+          setLoading(false)
+        }
+      }
     }
 
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return
+        
         console.log('Auth state changed:', event, session?.user?.id)
         setUser(session?.user ?? null)
         
@@ -53,24 +71,29 @@ export function useAuth() {
             
             if (error) {
               console.error('Erro ao buscar perfil:', error)
-              setProfile(null)
+              if (mounted) setProfile(null)
             } else {
               console.log('Perfil carregado:', profile)
-              setProfile(profile)
+              if (mounted) setProfile(profile)
             }
           } catch (err) {
             console.error('Erro geral ao buscar perfil:', err)
-            setProfile(null)
+            if (mounted) setProfile(null)
           }
         } else {
-          setProfile(null)
+          if (mounted) setProfile(null)
         }
         
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [supabase])
 
   const signOut = async () => {
